@@ -1,83 +1,47 @@
       
            
-            <!DOCTYPE html>
+
+<!DOCTYPE html>
 <html lang="sk">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Continental 2026 - Ročný Plán</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Continental 2026</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
-        body { font-family: 'Inter', sans-serif; -webkit-tap-highlight-color: transparent; }
+        body { font-family: 'Inter', sans-serif; }
         .shutdown-pattern { background-image: repeating-linear-gradient(45deg, transparent, transparent 5px, rgba(239, 68, 68, 0.1) 5px, rgba(239, 68, 68, 0.1) 10px); }
-        .no-scrollbar::-webkit-scrollbar { display: none; }
-        @media print {
-            @page { size: A4 landscape; margin: 0.5cm; }
-            .no-print { display: none !important; }
-            .print-grid { display: grid !important; grid-template-columns: repeat(4, 1fr) !important; gap: 10px !important; }
-            .month-card { break-inside: avoid; border: 1px solid #e2e8f0 !important; }
-            body { background: white !important; }
-        }
     </style>
 </head>
-<body id="bodyTag" class="bg-slate-100 transition-colors duration-500">
-    <div class="max-w-[1400px] mx-auto p-4 md:p-6">
-        
-        <div class="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8 no-print">
+<body class="bg-slate-100 p-4">
+    <div class="max-w-[1400px] mx-auto">
+        <div class="flex flex-col md:flex-row items-center justify-between mb-8 gap-4 text-center md:text-left">
             <div class="flex items-center gap-4">
-                <div class="bg-orange-500 p-3 rounded-2xl shadow-lg shadow-orange-200">
+                <div class="bg-orange-500 p-3 rounded-2xl shadow-lg">
                     <i data-lucide="calendar" class="text-white w-8 h-8"></i>
                 </div>
                 <div>
-                    <h1 class="text-3xl font-black text-slate-800 tracking-tight">Continental 2026</h1>
-                    <p class="text-slate-500 font-medium">Plán smien 12h (R/N)</p>
+                    <h1 class="text-3xl font-black text-slate-800 tracking-tight">CONTINENTAL 2026</h1>
+                    <p class="text-slate-500 font-medium italic">Zmenový kalendár 12h</p>
                 </div>
             </div>
-
-            <div class="flex flex-wrap items-center gap-3 bg-white p-2 rounded-3xl shadow-sm border border-slate-200">
-                <span class="px-4 text-xs font-bold text-slate-400 uppercase tracking-widest">Moja Smena:</span>
-                <div id="teamButtons" class="flex gap-2"></div>
-            </div>
-            
-            <div class="flex gap-2">
-                <button onclick="handlePrint()" class="bg-slate-800 hover:bg-black text-white px-6 py-3 rounded-2xl font-bold flex items-center gap-2 transition-all shadow-lg shadow-slate-200 active:scale-95">
-                    <i data-lucide="printer" class="w-5 h-5"></i> Tlačiť A4
-                </button>
-            </div>
+            <div class="flex gap-2" id="teamButtons"></div>
+            <button onclick="window.print()" class="bg-slate-800 text-white px-6 py-2 rounded-xl font-bold">TLAČIŤ</button>
         </div>
-
-        <div id="printAlert" class="hidden no-print bg-orange-100 border-l-4 border-orange-500 p-4 mb-6 rounded-r-xl animate-pulse">
-            <p class="text-orange-700 font-bold">Príprava na tlač... Nastavte orientáciu na "Na šírku" (Landscape).</p>
-        </div>
-
-        <div id="calendar" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 print-grid"></div>
+        <div id="calendar" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"></div>
     </div>
 
     <script>
         let currentTeam = 'A';
         const months = ['Január','Február','Marec','Apríl','Máj','Jún','Júl','August','September','Október','November','December'];
         
-        // Fixné odstávky 2026
-        const shutdowns = [
-            { start: '2026-07-20', end: '2026-08-02' },
-            { start: '2026-12-22', end: '2026-12-31' }
-        ];
-
-        function isShutdown(dateStr) {
-            return shutdowns.some(s => dateStr >= s.start && dateStr <= s.end);
-        }
-
         function getShift(date, team) {
-            const startPoint = new Date('2024-01-01');
-            const diffDays = Math.floor((date - startPoint) / (1000 * 60 * 60 * 24));
-            const cycle = diffDays % 8;
-            
-            const patterns = {
-                'A': [0,1,6,7], 'B': [2,3,0,1], 'C': [4,5,2,3], 'D': [6,7,4,5]
-            };
-            
+            const start = new Date('2024-01-01');
+            const diff = Math.floor((date - start) / 86400000);
+            const cycle = diff % 8;
+            const patterns = {'A':[0,1,6,7],'B':[2,3,0,1],'C':[4,5,2,3],'D':[6,7,4,5]};
             const p = patterns[team];
             if (p.slice(0,2).includes(cycle)) return 'R';
             if (p.slice(2,4).includes(cycle)) return 'N';
@@ -87,72 +51,45 @@
         function render() {
             const cal = document.getElementById('calendar');
             cal.innerHTML = '';
-            
             months.forEach((mName, mIdx) => {
                 const card = document.createElement('div');
-                card.className = "month-card bg-white rounded-3xl p-5 shadow-sm border border-slate-100 hover:shadow-md transition-shadow";
-                
-                let h = `<h2 class="font-black text-xl mb-4 text-slate-800 flex justify-between items-center">${mName} <span class="text-slate-200 text-xs">2026</span></h2>`;
-                h += `<div class="grid grid-cols-7 gap-1 text-center mb-2">${['Po','Ut','St','Št','Pi','So','Ne'].map(d => `<div class="text-[10px] font-bold text-slate-400 uppercase">${d}</div>`).join('')}</div>`;
-                h += `<div class="grid grid-cols-7 gap-1 text-center">`;
+                card.className = "bg-white rounded-3xl p-5 shadow-sm border border-slate-100 text-center";
+                let h = `<h2 class="font-black text-xl mb-4 text-slate-800 uppercase">${mName}</h2>`;
+                h += `<div class="grid grid-cols-7 gap-1 text-[10px] font-bold text-slate-400 mb-2"><div>PO</div><div>UT</div><div>ST</div><div>ŠT</div><div>PI</div><div>SO</div><div>NE</div></div>`;
+                h += `<div class="grid grid-cols-7 gap-1">`;
                 
                 const first = new Date(2026, mIdx, 1);
-                let startDay = first.getDay() || 7;
-                for(let i=1; i<startDay; i++) h += `<div></div>`;
+                let start = first.getDay() || 7;
+                for(let i=1; i<start; i++) h += `<div></div>`;
                 
-                const daysInMonth = new Date(2026, mIdx + 1, 0).getDate();
-                for(let d=1; d<=daysInMonth; d++) {
+                for(let d=1; d<=new Date(2026, mIdx+1, 0).getDate(); d++) {
                     const date = new Date(2026, mIdx, d);
-                    const dateStr = date.toISOString().split('T')[0];
-                    const shift = getShift(date, currentTeam);
-                    const isSun = date.getDay() === 0;
-                    const shut = isShutdown(dateStr);
-                    
-                    let bg = "bg-slate-50 text-slate-400";
-                    if (shift === 'R') bg = "bg-orange-500 text-white shadow-sm shadow-orange-100 font-bold";
-                    if (shift === 'N') bg = "bg-slate-800 text-white font-bold";
-                    if (shut) bg += " border-2 border-red-400 ring-1 ring-red-200";
-                    
-                    h += `<div class="relative group h-10 flex flex-col items-center justify-center rounded-lg text-xs transition-all ${bg} ${shut ? 'shutdown-pattern' : ''}">
-                            <span class="${isSun ? 'underline decoration-2' : ''}">${d}</span>
-                            <span class="text-[8px] opacity-80">${shift || ''}</span>
-                          </div>`;
+                    const s = getShift(date, currentTeam);
+                    let bg = "bg-slate-50 text-slate-300";
+                    if (s === 'R') bg = "bg-orange-500 text-white font-bold";
+                    if (s === 'N') bg = "bg-slate-800 text-white font-bold";
+                    h += `<div class="h-10 flex flex-col items-center justify-center rounded-lg text-xs ${bg}"><span>${d}</span><span class="text-[8px]">${s||''}</span></div>`;
                 }
-                
-                h += `</div>`;
-                card.innerHTML = h;
+                card.innerHTML = h + `</div>`;
                 cal.appendChild(card);
             });
             lucide.createIcons();
         }
 
-        function handlePrint() {
-            document.getElementById('printAlert').style.display = 'block';
-            setTimeout(() => {
-                window.print();
-                setTimeout(() => { 
-                    document.getElementById('printAlert').style.display = 'none'; 
-                }, 1000);
-            }, 1000);
-        }
-
-        const container = document.getElementById('teamButtons');
+        const tb = document.getElementById('teamButtons');
         ['A','B','C','D'].forEach(t => {
             const b = document.createElement('button');
             b.innerText = t;
-            b.className = "w-10 h-10 rounded-xl font-black text-sm transition-all " + (t === currentTeam ? "bg-orange-500 text-white" : "bg-white text-slate-400 hover:bg-slate-50");
-            b.onclick = () => {
-                document.querySelectorAll('#teamButtons button').forEach(el => {
-                    el.classList.remove('bg-orange-500', 'text-white');
-                    el.classList.add('bg-white', 'text-slate-400');
-                });
-                b.classList.remove('bg-white', 'text-slate-400');
-                b.classList.add('bg-orange-500', 'text-white');
-                currentTeam = t;
-                render();
-            };
-            container.appendChild(b);
+            b.className = `w-12 h-12 rounded-xl font-black ${t === currentTeam ? 'bg-orange-500 text-white' : 'bg-white text-slate-400 border border-slate-200'}`;
+            b.onclick = () => { currentTeam = t; render(); updateButtons(); };
+            tb.appendChild(b);
         });
+
+        function updateButtons() {
+            document.querySelectorAll('#teamButtons button').forEach(b => {
+                b.className = `w-12 h-12 rounded-xl font-black ${b.innerText === currentTeam ? 'bg-orange-500 text-white' : 'bg-white text-slate-400 border border-slate-200'}`;
+            });
+        }
 
         render();
     </script>
